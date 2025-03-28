@@ -310,7 +310,7 @@
     </style>
 </head>
 <body>
-    <div style="align-items:center; justify-content:center; width:100%; height:auto; text-align:center;">
+    <div id="Button_Up" style="align-items:center; justify-content:center; width:100%; height:auto; text-align:center;">
         <h1 id="TITLE">LIFE HUB</h1>
         <table class="button-table">
             <tbody>
@@ -455,7 +455,11 @@
                 conteiner.style.overflowY = "auto";
                 let tab_butt = document.querySelectorAll(".button-table");
                 tab_butt.style.maxWidth = maxW  + "px";
+                /*Button_Up*/
+                let div_butt = document.getElementById("Button_Up");
+                div_butt.style.maxWidth = maxW  + "px";
                 const buttons = document.querySelectorAll(".button-container");
+                
                 if (buttons.length > 0) {
                     buttons[0].classList.add("active"); // Seleziona il primo pulsante della lista
                 }
