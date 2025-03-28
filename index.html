@@ -316,14 +316,10 @@
             <tbody>
                 <tr>
                     <td><button class="button-container" onclick="showSection('calendario')">Calendario</button></td>
-
                     <td><button class="button-container" onclick="showSection('multe')">Multe</button></td>
-
                     <td><button class="button-container" onclick="showSection('pagamenti')">Pagamenti</button></td>
-
                     <td><button class="button-container" onclick="showSection('salute')">Salute</button></td>
                 </tr>
-
             </tbody>
         </table>
         <!--
@@ -454,10 +450,10 @@
                 conteiner.style.maxHeight = maxHeight + "px";
                 conteiner.style.overflowY = "auto";
                 let tab_butt = document.querySelectorAll(".button-table");
-                tab_butt.style.maxWidth = width  + "px";
+                tab_butt.style.maxWidth = maxW  + "px";
                 /*Button_Up*/
                 let div_butt = document.getElementById("Button_Up");
-                div_butt.style.maxWidth = width  + "px";
+                div_butt.style.maxWidth = maxW  + "px";
                 const buttons = document.querySelectorAll(".button-container");
                 
                 if (buttons.length > 0) {
