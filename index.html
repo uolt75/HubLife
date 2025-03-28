@@ -433,14 +433,14 @@
                 let height = window.innerHeight;
                 console.log("Larghezza: " + width + "px");
                 console.log("Altezza: " + height + "px");
-                let conteiner = document.querySelectorAll(".container");
+                let conteiner = document.querySelector(".container");
                 let maxW = width - 50;
                 /*
                 let title_w = document.getElementById("TITLE");
                 title_w.innerHTML = width.toString();
                 */
                 conteiner.style.maxWidth = maxW  + "px";
-                let section = document.querySelectorAll(".section");
+                let section = document.querySelector(".section");
                 section.style.maxWidth = maxW  + "px";
                 let windowHeight = window.innerHeight;
                 let headerHeight = document.querySelector("header")?.offsetHeight || 0;
@@ -449,7 +449,7 @@
                 let maxHeight = windowHeight - otherElementsHeight;
                 conteiner.style.maxHeight = maxHeight + "px";
                 conteiner.style.overflowY = "auto";
-                let tab_butt = document.querySelectorAll(".button-table");
+                let tab_butt = document.querySelector(".button-table");
                 tab_butt.style.maxWidth = maxW  + "px";
                 /*Button_Up*/
                 let div_butt = document.getElementById("Button_Up");
