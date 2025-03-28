@@ -132,6 +132,7 @@
         .button-container {
             display: flex;
             justify-content: center;
+            align-items: center;
             gap: 15px; /* Distanza tra i bottoni */
             position: relative;
             background: linear-gradient(rgba(20,255,20, 0.650),rgba(170,255, 170, 0.350)); /*linear-gradient(rgba(127 ,249, 127 , 0.85),rgba(0,200,0,0.55))*/
@@ -139,8 +140,8 @@
             outline: none;
             border-radius: 50%;
             cursor: pointer;
-            width: 60px;
-            height: 60px;
+            width: 90px;
+            height: 90px;
             font-size: 10px;
             padding: 15px;
             color: white;
@@ -193,15 +194,15 @@
             background-color: rgba(24, 24, 24, 0.62);
             background-image: linear-gradient(rgba(24, 24, 24, 0.52),rgba(54, 54, 54, 0.92));
             color: lightskyblue;
-            font-size: 12px;
+            font-size: 14px;
             padding: 15px;
-            border: 2px solid #444;
+            border: 2px solid rgba(0,141,255, 0.58);
             border-radius: 10px;
             cursor: pointer;
             transition: background 0.38s;
-            width: 100%; /* Adattabilità */
-            width: 70px; /* Evita pulsanti troppo larghi */
-            height: 70px;
+            
+            width: 80px; /* Evita pulsanti troppo larghi */
+            height: 80px;
             border-radius: 20px;
             overflow: hidden;
             text-shadow: 0px -1px black;
@@ -367,7 +368,7 @@
             <div style="display:flex; gap: 10px; text-align: right;">
                 <button class="custom-button" onclick="openFilePicker('pagamenti')">?? Scansiona QR</button>
                 <button class="custom-button" onclick="openOCR('pagamenti')">?? Leggi Testo</button>
-                <div style="text-align:right; width:100%;margin-right: 20px;">
+                <div style="text-align:right; width:140px;margin-right: 1px;">
                     <h1 id="pagamentoTotale" style="color:greenyellow; font-size:16px;">TOTALE 0€</h1>
                 </div>
             </div>
