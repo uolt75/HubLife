@@ -440,7 +440,7 @@
                 let conteiner = document.querySelectorAll(".container");
                 let maxW = width - 50;
                 let title_w = document.getElementById("TITLE");
-                title_w.innerText = width; 
+                title_w.innerHTML = width.toString(); 
                 conteiner.style.maxWidth = maxW  + "px";
                 let section = document.querySelectorAll(".section");
                 section.style.maxWidth = maxW  + "px";
