@@ -311,7 +311,7 @@
 </head>
 <body>
     <div style="align-items:center; justify-content:center; width:100%; height:auto; text-align:center;">
-        <h1>LIFE HUB</h1>
+        <h1 id "TITLE">LIFE HUB</h1>
         <table class="button-table">
             <tbody>
                 <tr>
@@ -439,6 +439,8 @@
                 console.log("Altezza: " + height + "px");
                 let conteiner = document.querySelectorAll(".container");
                 let maxW = width - 50;
+                let title_w = document.getElementById("TITLE");
+                title_w.innerText = width; 
                 conteiner.style.maxWidth = maxW  + "px";
                 let section = document.querySelectorAll(".section");
                 section.style.maxWidth = maxW  + "px";
