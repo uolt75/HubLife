@@ -368,7 +368,7 @@
                 <button class="custom-button" onclick="openFilePicker('pagamenti')">?? Scansiona QR</button>
                 <button class="custom-button" onclick="openOCR('pagamenti')">?? Leggi Testo</button>
                 <div style="text-align:right; width:100%;margin-right: 20px;">
-                    <h1 id="pagamentoTotale" style="color:greenyellow; font-size:12px;">TOTALE 0€</h1>
+                    <h1 id="pagamentoTotale" style="color:greenyellow; font-size:16px;">TOTALE 0€</h1>
                 </div>
             </div>
 
@@ -1108,10 +1108,10 @@
 
                 const datePattern = /\b(\d{1,2}[\/.-]\d{1,2}[\/.-]\d{2,4})\b/i;
                 /*const pricePattern = /(\d+[\.,]?\d*) ?€?/;
-
+           
                const dateMatch = text.match(datePattern);
                const priceMatch = text.match(pricePattern);
-
+           
                const date = dateMatch ? dateMatch[0] : "Data non trovata";
                const total = priceMatch ? priceMatch[1].replace(",", ".") : "Importo non trovato";
                const tout = "totale: " + total + " | Data: " + date;
@@ -1126,18 +1126,19 @@
                 //const totalRegex = /(?:IMPORTO|IMPORTO PAGATO|TOTALE)?\s*([\d.,]+)\s*(?:EUR)?/i;
                 //const totalRegex = /(?:ZEUS|EUR|IMPORTO|IMPORTO PAGATO|TOTALE)?\s*(?:EUR)?/i;
                 const totalRegex = /(?:IMPORTO|IMPORTO PAGATO|PAGATO|TOTALE|PAGAMENTO CONTANTE|PAGAMENTO ELETTRONICO)[^\d]*([\d]{1,3}(?:[.,]\d{2})?)|([\d]{1,3}(?:[.,]\d{2})?)\s*EUR/i;
-                const totalRegexPC = /(?:PAGAMENTO CONTANTE)[^\d]*([\d]{1,3}(?:[.,]\d{2})?)|([\d]{1,3}(?:[.,]\d{2})?)\s*EUR/i;
-                const totalRegexPE = /(?:PAGAMENTO ELETTRONICO)[^\d]*([\d]{1,3}(?:[.,]\d{2})?)|([\d]{1,3}(?:[.,]\d{2})?)\s*EUR/i;
+                const totalRegexPC = /(?:PAGAMENTO CONTANTE)[^\d]*([\d.,]+)/i;
+                const totalRegexPE = /(?:PAGAMENTO ELETTRONICO)[^\d]*([\d.,]+)/i;
 
                 // Regex per trovare date nel formato: 27/01/1975 19:30 o 27-01-1975 19:30
                 const dateRegex = /(\d{2}[\/-]\d{2}[\/-]\d{4})\s*(\d{2}:\d{2})?/i;
                 const dateRegex2 = /(\d{2}-\d{2}-\d{4})\s*(?:ora\s*)?(\d{2}:\d{2})?/i;
                 let foundTotal = null;
                 let foundDate = null;
-                let descrizione = "";
-                let contanti = "0€";
-                let carte = "0€";
-                let insert = true;
+                var descrizione = "";
+                var contanti = "0€";
+                var carte = "0€";
+                var insert = true;
+                var insert_count = 0;
                 // Scorriamo ogni riga per cercare le informazioni
                 lines.forEach(line => {
 
@@ -1153,11 +1154,11 @@
                                 foundTotal = totalMatch[j].replace(",", "."); // Convertiamo , in . per numeri
                         }
                     }
-
+                    
                     if (dateMatch && !foundDate) {
                         foundDate = dateMatch[1] + (dateMatch[2] ? " " + dateMatch[2] : "");
                     }
-
+            
                     if (justDataMatch && !foundDate) {
                         foundDate = justDataMatch[0];
                     }
@@ -1205,7 +1206,9 @@
 
                         }
                         wht = wht.trimEnd();
-
+                        if (totalMatch.input.toLowerCase().includes("eur")) {
+                            splitted = totalMatch.input.split("EUR")[0];
+                        }
                         if (wht.includes("importo") || wht.includes("importo pagato") ||
                             wht.includes("totale") || totalMatch.input.toLowerCase().includes("eur") ||
                             totalMatch.input.toLowerCase().includes("pagato")) {
@@ -1230,16 +1233,18 @@
                         if (insert) {
                             if (line) {
                                 let str = line.toLowerCase();
-                                if (str.includes("documento commerciale"))
+                                if (str.includes("documento commerciale") || foundDate)
                                     insert = false;
                                 else
-                                    descrizione += line + "|";
+                                    descrizione += line.replace("|", " ") + " ";
 
                             }
                         }
                     }
-                });
 
+                });
+                if (foundDate)
+                    foundDate = foundDate.replace("-", "/");
                 savePayment(descrizione, foundDate, contanti, carte, foundTotal);
 
             }
