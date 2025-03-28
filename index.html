@@ -1,0 +1,1391 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <meta name="screen-orientation" content="portrait">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <title>LIFE HUB</title>
+    <link rel="manifest" href="manifest.json">
+    <script src="https://unpkg.com/@zxing/library@latest"></script>
+    <script src="https://unpkg.com/tesseract.js@latest"></script>
+    <script async src="https://docs.opencv.org/4.5.1/opencv.js" onload="cvReady()" onerror="cvLoadError()"></script>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background-color: black;
+            scrollbar-3dlight-color: #16415c;
+            scrollbar-darkshadow-color: #0b1b30;
+            scrollbar-face-color: deepskyblue;
+            scrollbar-highlight-color: #1f414c;
+            scrollbar-shadow-color: #070e19;
+            scrollbar-darkshadow-color: black;
+            scrollbar-track-color: #171c21;
+            scrollbar-base-color: deepskyblue;
+            scrollbar-arrow-color: deepskyblue;
+            overflow: hidden;
+        }
+
+        *::-webkit-scrollbar-thumb {
+            background-color: blue; /* color of the scroll thumb */
+            border-radius: 20px; /* roundness of the scroll thumb */
+        }
+
+
+        .section {
+            display: none;
+            text-align: center;
+            margin-top: 20px;
+            overflow: auto;
+            max-width: 300px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            border: none;
+        }
+
+
+        .container {
+            background: black;
+            width: 100%;
+            max-width: 350px;
+            overflow-x: auto;
+            overflow-y: auto;
+            max-height: 300px; /* Imposta l'altezza massima */
+        }
+
+        h1, h2 {
+            color: deepskyblue;
+        }
+
+        input {
+            margin: 10px 0;
+        }
+
+        @keyframes led-spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        #processedImageContainer {
+            margin-top: 10px;
+            border: 1px solid #ddd;
+            display: inline-block;
+        }
+
+        pre {
+            background: #eee;
+            padding: 10px;
+            border-radius: 5px;
+            text-align: left;
+        }
+
+        .animated-table {
+            width: 0; /* Parte nascosta */
+            height: 0;
+            opacity: 0;
+            overflow: hidden;
+            background-color: #74cd69;
+            /*border-collapse: collapse;*/
+            border-color: white;
+            transition: width 2.5s ease-in-out, height 2.5s ease-in-out, opacity 2.5s ease-in-out;
+        }
+
+            /* Quando la tabella è visibile */
+            .animated-table.show {
+                width: 100%;
+                border-collapse: collapse;
+                margin-top: 20px;
+                border: none;
+                height: auto; /* Si espande in base al contenuto */
+                opacity: 1;
+            }
+
+        .button-table {
+            width: 100%;
+            max-width: 500px;
+            margin: auto;
+            border-collapse: collapse;
+            position: center;
+        }
+
+            .button-table td {
+                padding: 10px;
+                text-align: center;
+                border: none;
+            }
+
+        .button-container {
+            display: flex;
+            justify-content: center;
+            gap: 15px; /* Distanza tra i bottoni */
+            position: relative;
+            background: linear-gradient(rgba(20,255,20, 0.650),rgba(170,255, 170, 0.350)); /*linear-gradient(rgba(127 ,249, 127 , 0.85),rgba(0,200,0,0.55))*/
+            border: none;
+            outline: none;
+            border-radius: 50%;
+            cursor: pointer;
+            width: 60px;
+            height: 60px;
+            font-size: 10px;
+            padding: 15px;
+            color: white;
+            box-shadow: inset 0 0 15px rgba(55, 255, 55, 0.93), /* Luce interna */
+            0 4px 15px rgba(0, 0, 0, 0.852); /* Ombra esterna */
+            transition: all 0.3s ease;
+        }
+
+            .button-container::before {
+                content: "";
+                position: absolute;
+                top: -4px;
+                left: -4px;
+                width: 102%;
+                height: 102%;
+                border-radius: 50%;
+                border: 4px solid transparent;
+                border-top: 4px solid lime;
+                /*animation: led-spin 2s linear infinite;*/
+                opacity: 0;
+            }
+
+            .button-container.active {
+                background: linear-gradient(rgba(152, 255, 152, 0.450),rgba(107, 251, 107, 0.750));
+                box-shadow: 0px 0px 10px rgba(170, 250,170, 0.91),0px 0px 15px rgba(170, 250,170,0.80),0px 0px 30px rgba(170, 250,170, 0.650),0px 0px 60px rgba(170, 250,170, 0.450);
+                border-color: rgba(100, 255,100, 0.90);
+            }
+
+                .button-container.active::before {
+                    opacity: 1;
+                    animation: led-spin 2s linear infinite 0.3s;
+                }
+
+            .button-container:hover {
+                transform: scale(1.051,1.051);
+                background-image: linear-gradient(rgba(167,249, 167, 0.85),rgba(0,200,0,0.55));
+                box-shadow: 0px 0px 10px rgba(170,255,170, 0.91),0px 0px 25px rgba(180,255,180, 0.80),0px 0px 40px rgba(190, 255,190, 0.70),0px 0px 70px rgba(200, 255,200, 0.20);
+            }
+
+                .button-container:hover::before {
+                    box-shadow: inset 0 0 15px rgba(155, 255, 155, 0.93), /* Luce interna */
+                    0 4px 6px rgba(90, 90, 90, 0.52); /* Ombra esterna */
+                }
+        /* Stile del pulsante */
+        .custom-button {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background-color: rgba(24, 24, 24, 0.62);
+            background-image: linear-gradient(rgba(24, 24, 24, 0.52),rgba(54, 54, 54, 0.92));
+            color: lightskyblue;
+            font-size: 12px;
+            padding: 15px;
+            border: 2px solid #444;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: background 0.38s;
+            width: 100%; /* Adattabilità */
+            width: 70px; /* Evita pulsanti troppo larghi */
+            height: 70px;
+            border-radius: 20px;
+            overflow: hidden;
+            text-shadow: 0px -1px black;
+        }
+            /* Stile del pulsante attivo */
+            .custom-button.active {
+                border-color: deepskyblue;
+                background-color: rgba(0,141,255, 0.58); /* Blu acceso */
+                background-image: linear-gradient(rgba(0,141,255, 0.162),rgba(0, 191, 255, 0.90));
+                box-shadow: 0px 0px 20px rgba(0,161,255, 0.91),0px 0px 35px rgba(0, 171, 255,0.80),0px 0px 100px rgba(0, 191, 255,0.70),0px 0px 140px rgba(0, 191, 255,0.20);
+                color: white;
+                border-color: rgba(0, 191, 255, 0.90);
+                text-shadow: 0 0 20px rgb(220 220 220), 0 0 30px rgb(230 230 230), 0 0 40px rgb(235 235 235), 0 0 50px rgb(245 245 245), 0 0 60px rgb(250 250 250), 0 0 70px rgb(255 255 255), 0 0 80px rgb(255 255 255);
+            }
+
+            .custom-button:hover {
+                border-color: lightskyblue;
+                background-color: rgba(0, 170, 255, 0.88);
+                background-image: linear-gradient(rgba(0,170,255, 0.162),rgba(118, 204, 247, 0.9));
+                box-shadow: 0px 0px 20px rgba(0,161,255, 0.91),0px 0px 35px rgba(0,171,255, 0.80),0px 0px 100px rgba(135, 206, 250, 0.70),0px 0px 140px rgba(135, 206, 250, 0.20);
+                color: white;
+                text-shadow: 0 0 20px rgb(220 220 220), 0 0 30px rgb(230 230 230), 0 0 40px rgb(235 235 235), 0 0 50px rgb(245 245 245), 0 0 60px rgb(250 250 250), 0 0 70px rgb(255 255 255), 0 0 80px rgb(255 255 255);
+            }
+
+            .custom-button:after {
+                position: relative;
+                background-color: rgba(255,255,255,0.5);
+            }
+            /* Stile delle immagini nei pulsanti */
+            .custom-button img {
+                width: 20px;
+                height: 20px;
+                margin-bottom: 10px;
+            }
+        /*
+             .custom-button::before {
+                 content: '';
+                 position: center;
+
+                 top: 10px;
+                 z-index: -1;
+                 width: 140px;
+                 height: 160px;
+                 background-color: rgba(255,255,255,0.5);
+                 border-radius:10px;
+             }
+         */
+        .path {
+            stroke: white;
+            stroke-width: 4;
+            stroke-dasharray: 200;
+            stroke-dashoffset: 200;
+            border-radius: 50%;
+            background-color: white;
+            animation: borderblueanim 2s linear infinite;
+        }
+
+        @keyframes borderblueanim {
+            from {
+                stroke-dashoffset: 800;
+            }
+
+            to {
+                stroke-dashoffset: 0;
+            }
+        }
+
+        #thead_prog {
+            font-size: 16px;
+            height: 34px;
+            margin: 5px 2px;
+            color: white;
+            /*border: solid 2px white;*/
+            border-spacing: 5px;
+            text-align: left;
+            border-color: white;
+            background-color: rgba(108, 252, 60, 0.365);
+        }
+
+        .th {
+            border: solid 2px deepskyblue;
+            text-align: left;
+            padding: 5px 10px;
+            background-color: lawngreen;
+            font-size: 12px;
+        }
+
+        .tr {
+        }
+
+        #paymentTable, #multeTable {
+            height: 50px;
+            margin: 5px 5px;
+            color: white;
+            /*border: solid 2px white;*/
+            border-spacing: 5px;
+            border-color: white;
+            font-size: 12px;
+            background-color: lawngreen;
+            /*
+         border-left: 15px solid transparent;
+         border-right: 15px solid transparent;
+        */
+        }
+    </style>
+</head>
+<body>
+    <div style="align-items:center; justify-content:center; width:100%; height:auto; text-align:center;">
+        <h1>LIFE HUB</h1>
+        <table class="button-table">
+            <tbody>
+                <tr>
+                    <td><button class="button-container" onclick="showSection('calendario')">Calendario</button></td>
+
+                    <td><button class="button-container" onclick="showSection('multe')">Multe</button></td>
+
+                    <td><button class="button-container" onclick="showSection('pagamenti')">Pagamenti</button></td>
+
+                    <td><button class="button-container" onclick="showSection('salute')">Salute</button></td>
+                </tr>
+
+            </tbody>
+        </table>
+        <!--
+        <button class="button-container" onclick="showSection('calendario')">Calendario</button>
+        <button class="button-container" onclick="showSection('multe')">Multe</button>
+        <button class="button-container" onclick="showSection('pagamenti')">Pagamenti</button>
+        <button class="button-container" onclick="showSection('salute')">Salute</button>
+    -->
+    </div>
+    <div id="calendario" class="section">
+        <h2>Calendario</h2>
+        <div style="display:flex; gap:10px; " >
+            <button class="custom-button" onclick="openFilePicker('calendario')">?? Scansiona QR</button>
+            <button class="custom-button" onclick="openOCR('calendario')">?? Leggi Testo</button>
+            </div>
+            <ul id="calendario-list"></ul>
+            <input type="text" id="event-title" placeholder="Nome evento">
+            <input type="date" id="event-date">
+            <button onclick="addEvent()">Salva Evento</button>
+            <ul id="event-list"></ul>
+        </div>
+
+    <div id="multe" class="section">
+        <h2>Multe</h2>
+        <div style="display: flex; gap: 10px; ">
+            <button class="custom-button" onclick="openFilePicker('multe')">?? Scansiona QR</button>
+            <button class="custom-button" onclick="openOCR('multe')">?? Leggi Testo</button>
+        </div>
+        <ul id="multe-list"></ul>
+        <div class="container">
+            <table class="animated-table" id="TabMulte">
+                <thead id="thead_prog">
+                    <tr><th>Numero Verbale</th><th>Data</th><th>Ora</th><th>Via</th><th>Codice infrazione</th><th>Sanzione</th><th>Totale</th></tr>
+                </thead>
+                <tbody id="multeTable"></tbody>
+            </table>
+            </div>
+        </div>
+
+        <div id="pagamenti" class="section">
+            <h2>Pagamenti</h2>
+            <div style="display:flex; gap: 10px; text-align: right;">
+                <button class="custom-button" onclick="openFilePicker('pagamenti')">?? Scansiona QR</button>
+                <button class="custom-button" onclick="openOCR('pagamenti')">?? Leggi Testo</button>
+                <div style="text-align:right; width:100%;margin-right: 20px;">
+                    <h1 id="pagamentoTotale" style="color:greenyellow; font-size:12px;">TOTALE 0€</h1>
+                </div>
+            </div>
+
+            <!--
+        <div id="ciccio" style="display:grid">
+            <div id="processedImageContainer" style="border: 1px solid black; width: 100%; text-align: center; ">
+                <p>Immagine processata:</p>
+
+            </div>
+            <input type="range" id="thresholdSlider" min="0" max="255" value="70">
+            <span id="thresholdValue">40</span>
+            <canvas id="outputCanvas"></canvas>
+        </div>
+
+        <ul id="pagamenti-list"></ul>
+            -->
+            <div class="container">
+                <table class="animated-table" id="TabPaga">
+                    <thead id="thead_prog">
+                        <tr><th>Descrizione</th><th>Data</th><th>Contanti</th><th>Carta</th><th>Importo</th></tr>
+                    </thead>
+                    <tbody id="paymentTable"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="salute" class="section">
+            <h2>Salute</h2>
+            <div style="display: flex; gap: 10px; ">
+                <button class="custom-button" onclick="openFilePicker('salute')">?? Scansiona QR</button>
+                <button class="custom-button" onclick="openOCR('salute')">?? Leggi Testo</button>
+            </div>
+            <!--<ul id="salute-list"></ul>-->
+        </div>
+
+        <input type="file" id="file-input" accept="image/*" style="display: none;" onchange="processImage(event)">
+        <canvas id="canvas" class="hidden"></canvas>
+        <!--<p id="output"></p>-->
+
+        <script>
+            let scanType = '';
+            function openFullScreen() {
+                let elem = document.documentElement; // Prende l'intero documento
+
+                if (elem.requestFullscreen) {
+                    elem.requestFullscreen();
+                } else if (elem.mozRequestFullScreen) { // Firefox
+                    elem.mozRequestFullScreen();
+                } else if (elem.webkitRequestFullscreen) { // Chrome, Safari e Opera
+                    elem.webkitRequestFullscreen();
+                } else if (elem.msRequestFullscreen) { // Internet Explorer/Edge
+                    elem.msRequestFullscreen();
+                }
+            }
+            document.addEventListener("DOMContentLoaded", () => {
+                if (document.documentElement.requestFullscreen) {
+                    document.documentElement.requestFullscreen();
+                }
+                initDB(); // Inizializza il database
+                clearDatabase();
+                setTimeout(() => {
+                    openFullScreen();
+                }, 500); // Ritardo per evitare blocchi
+
+
+                let width = window.innerWidth;
+                let height = window.innerHeight;
+                console.log("Larghezza: " + width + "px");
+                console.log("Altezza: " + height + "px");
+                let conteiner = document.querySelectorAll(".container");
+                conteiner.style.maxWidth = (width - 50) + "px";
+                let section = document.querySelectorAll(".section");
+                section.style.maxWidth = (width - 50) + "px";
+                let windowHeight = window.innerHeight;
+                let headerHeight = document.querySelector("header")?.offsetHeight || 0;
+                let footerHeight = document.querySelector("footer")?.offsetHeight || 0;
+                let otherElementsHeight = headerHeight + footerHeight + 20; // 20px per margini o padding
+                let maxHeight = windowHeight - otherElementsHeight;
+                conteiner.style.maxHeight = maxHeight + "px";
+                conteiner.style.overflowY = "auto";
+                const buttons = document.querySelectorAll(".button-container");
+                if (buttons.length > 0) {
+                    buttons[0].classList.add("active"); // Seleziona il primo pulsante della lista
+                }
+
+                for (var i = 0; i < buttons.length; i++) {
+                    buttons[i].addEventListener("mouseenter", function () {
+
+                    });
+
+                    buttons[i].addEventListener("mouseleave", function () {
+
+                    });
+                    buttons[i].addEventListener("click", function () {
+
+                        // Rimuove la classe 'active' da tutti i pulsanti
+                        for (var j = 0; j < buttons.length; j++) {
+                            buttons[j].classList.remove("active");
+                        }
+
+                        // Aggiunge la classe 'active' solo al pulsante premuto
+                        this.classList.add("active");
+                    });
+                }
+            });
+            function cvReady() {
+                console.log("OpenCV.js caricato correttamente!");
+            }
+
+            function cvLoadError() {
+                console.error("Errore nel caricamento di OpenCV.js!");
+            }
+
+            function sortTable(tableName, columnIndex) {
+                var table = tableName;
+                var rows = table.rows;
+                var switching = true;
+                var shouldSwitch, i;
+                var direction = "asc"; // ordine di default: ascendente
+
+                while (switching) {
+                    switching = false;
+                    for (i = 0; i < (rows.length - 1); i++) {
+                        shouldSwitch = false;
+                        var x = rows[i].getElementsByTagName("TD")[columnIndex];
+                        var y = rows[i + 1].getElementsByTagName("TD")[columnIndex];
+                        var xValue = x.innerHTML.toLowerCase();
+                        var yValue = y.innerHTML.toLowerCase();
+
+                        if (direction === "asc") {
+                            if (xValue > yValue) {
+                                shouldSwitch = true;
+                                break;
+                            }
+                        } else if (direction === "desc") {
+                            if (xValue < yValue) {
+                                shouldSwitch = true;
+                                break;
+                            }
+                        }
+                    }
+
+                    if (shouldSwitch) {
+                        rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
+                        switching = true;
+                    }
+                }
+
+                if (direction === "asc") {
+                    direction = "desc";
+                } else if (direction === "desc") {
+                    direction = "asc";
+                }
+            }
+
+            function updateLabelTr(table) {
+                var tab = table;
+                var el = tab.getElementsByTagName("tr");
+                for (var i = 0; i < el.length; i++) {
+                    if (IsNotUneven(i))
+                        el[i].style.backgroundColor = "#111a23";
+                    else
+                        el[i].style.backgroundColor = "#266a9f";
+
+                    el[i].style.height = "50px";
+                    //  el[i].innerHTML = el[i].innerHTML + " ( indice: " + i + " )";
+
+                }
+
+            }
+
+            function updateLabelTrsTable(table) {
+                var tab = table;
+                var el = tab.getElementsByTagName("tr");
+
+                var count = 0;
+                for (var i = 0; i < el.length; i++) {
+
+                    if (IsNotUneven(i))
+                        el[i].style.backgroundColor = "rgba(20 ,61 ,20, 0.20)";
+                    else
+                        el[i].style.backgroundColor = "rgba(20 ,61 ,20,0.67)";
+
+
+                    el[i].style.height = "50px";
+                    //  el[i].innerHTML = el[i].innerHTML + " ( indice: " + i + " )";
+
+                }
+
+            }
+            function IsNotUneven(numero) {
+                if (isNaN(numero) == false) {
+                    return (numero % 2 == 1 ? true : false);
+                }
+                else {
+                    return null;
+                }
+            }
+
+            function showSection(sectionId) {
+                document.querySelectorAll('.section').forEach(sec => sec.style.display = 'none');
+                document.getElementById(sectionId).style.display = 'block';
+                let tableP = document.getElementById("TabPaga");
+                tableP.classList.remove("show");
+                tableP.style.transition = "none";
+                tableP.style.width = "0px";  // Resetta la larghezza
+                tableP.style.height = "0px"; // Resetta l'altezza
+                tableP.style.opacity = "0";   // Lo rende invisibile
+                let tableM = document.getElementById("TabMulte");
+                tableM.classList.remove("show");
+                tableM.style.transition = "none";
+                tableM.style.width = "0px";  // Resetta la larghezza
+                tableM.style.height = "0px"; // Resetta l'altezza
+                tableM.style.opacity = "0";   // Lo rende invisibile
+                let tbody_prog = null;
+                switch (sectionId) {
+                    case "pagamenti":
+                        tbody_prog = document.getElementById("paymentTable");
+                        setTimeout(function () {
+                            tableP.style.transition = "width 2.5s ease-in-out, height 2.5s ease-in-out, opacity 2.5s ease-in-out;";
+                            tableP.classList.add("show");
+                            setTimeout(function () {
+                                tableP.style.opacity = "1";
+                                tableP.style.width = "100%";
+                                tableP.style.height = "100%";
+                            }, 200);
+                        }, 200);
+
+                        break;
+
+                    case "multe":
+                        tbody_prog = document.getElementById("paymentMulte");
+                        setTimeout(function () {
+                            tableM.style.transition = "width 2.5s ease-in-out, height 2.5s ease-in-out, opacity 2.5s ease-in-out;";
+                            tableM.classList.add("show");
+                            setTimeout(function () {
+                                tableM.style.opacity = "1";
+                                tableM.style.width = "100%";
+                                tableM.style.height = "100%";
+                            }, 200);
+                        }, 200);
+                        break;
+                }
+
+
+                loadCategoryDataIn(sectionId);
+            }
+
+            function openFilePicker(category) {
+                let fileInput = document.getElementById("file-input");
+                fileInput.dataset.category = category;
+                //fileInput.addEventListener("change", processImage(fileInput.event));
+                scanType = 'qr';
+                fileInput.click();
+            }
+            /*
+            function preprocessImage(img) {
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+
+                canvas.width = img.width;
+                canvas.height = img.height;
+                ctx.drawImage(img, 0, 0, img.width, img.height);
+
+                // Convertire in bianco e nero per migliore leggibilità
+                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                const pixels = imageData.data;
+
+                for (let i = 0; i < pixels.length; i += 4) {
+                    const r = pixels[i];
+                    const g = pixels[i + 1];
+                    const b = pixels[i + 2];
+
+                    // Converti in scala di grigi
+                    let gray = (r + g + b) / 3;
+
+                    // Aumenta il contrasto
+                    gray = gray > 100 ? 255 : 0;
+
+                    pixels[i] = pixels[i + 1] = pixels[i + 2] = gray;
+                }
+
+                ctx.putImageData(imageData, 0, 0);
+                // Mostrare l'immagine processata nella pagina
+                const processedImageContainer = document.getElementById('processedImageContainer');
+                processedImageContainer.innerHTML = ''; // Pulisce eventuali immagini precedenti
+                processedImageContainer.appendChild(canvas);
+                return canvas;
+            }
+            */
+            function deskewImage(src) {
+                let gray = new cv.Mat();
+                let binary = new cv.Mat();
+                let lines = new cv.Mat();
+
+                // 1?? Convertiamo in scala di grigi
+                cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY, 0);
+
+                // 2?? Applichiamo una soglia binaria per evidenziare il testo
+                cv.threshold(gray, binary, 0, 255, cv.THRESH_BINARY + cv.THRESH_OTSU);
+
+                // 3?? Troviamo le linee di testo con la trasformata di Hough
+                cv.Canny(binary, binary, 50, 200, 3);
+                cv.HoughLines(binary, lines, 1, Math.PI / 180, 100);
+
+                let angleSum = 0;
+                let count = 0;
+
+                for (let i = 0; i < lines.rows; i++) {
+                    let rho = lines.data32F[i * 2];
+                    let theta = lines.data32F[i * 2 + 1];
+                    let angle = (theta * 180) / Math.PI - 90; // Convertiamo in gradi
+
+                    // Filtriamo solo le linee quasi orizzontali (-45° < angolo < 45°)
+                    if (angle > -45 && angle < 45) {
+                        angleSum += angle;
+                        count++;
+                    }
+                }
+
+                let medianAngle = count > 0 ? angleSum / count : 0;
+
+                // 4?? Ruotiamo l'immagine per correggere l'angolo
+                let center = new cv.Point(src.cols / 2, src.rows / 2);
+                let rotationMatrix = cv.getRotationMatrix2D(center, medianAngle, 1);
+                let rotated = new cv.Mat();
+                cv.warpAffine(src, rotated, rotationMatrix, src.size(), cv.INTER_LINEAR, cv.BORDER_CONSTANT, new cv.Scalar());
+
+                // ?? Pulizia memoria
+                gray.delete(); binary.delete(); lines.delete();
+
+                return rotated;
+            }
+            function deskewImage2(src) {
+                let gray = new cv.Mat();
+                let edges = new cv.Mat();
+                let lines = new cv.Mat();
+
+                // Converti in scala di grigi
+                cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY, 0);
+
+                // Trova i bordi con Canny
+                cv.Canny(gray, edges, 50, 150, 3, false);
+
+                // Rileva le linee con Hough Transform
+                cv.HoughLines(edges, lines, 1, Math.PI / 180, 200);
+
+                let angle = 0;
+                let count = 0;
+
+                // Calcola l'angolo medio delle linee rilevate
+                for (let i = 0; i < lines.rows; i++) {
+                    let rho = lines.data32F[i * 2];
+                    let theta = lines.data32F[i * 2 + 1];
+                    let degrees = theta * (180 / Math.PI);
+
+                    // Escludi linee troppo verticali o orizzontali
+                    if (degrees > 45 && degrees < 135) {
+                        angle += degrees - 90;
+                        count++;
+                    }
+                }
+
+                if (count > 0) {
+                    angle /= count;
+                }
+
+                // Ruota l'immagine per correggere l'inclinazione
+                let rotated = new cv.Mat();
+                let center = new cv.Point(src.cols / 2, src.rows / 2);
+                let M = cv.getRotationMatrix2D(center, angle, 1);
+                cv.warpAffine(src, rotated, M, new cv.Size(src.cols, src.rows), cv.INTER_LINEAR, cv.BORDER_CONSTANT, new cv.Scalar());
+
+                // Pulizia memoria temporanea
+                gray.delete();
+                edges.delete();
+                lines.delete();
+                M.delete();
+
+                return rotated;
+            }
+
+            /*
+            function preprocessImage(img) {
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+
+                canvas.width = img.width;
+                canvas.height = img.height;
+                ctx.drawImage(img, 0, 0, img.width, img.height);
+
+                // Convertiamo in Mat per OpenCV
+                let src = cv.imread(canvas);
+                let deskewed = deskewImage(src);
+                let gray = new cv.Mat();
+                let dst = new cv.Mat();
+                let binary = new cv.Mat();
+                // 1?? Converti in scala di grigi
+                cv.cvtColor(deskewed, gray, cv.COLOR_RGBA2GRAY, 0);
+
+                // 2?? Riduzione del rumore con un filtro bilaterale
+                let filtered = new cv.Mat();
+                cv.bilateralFilter(gray, filtered, 9, 75, 75, cv.BORDER_DEFAULT);
+
+                // 3?? Soglia adattiva per migliorare il contrasto
+                cv.adaptiveThreshold(filtered, dst, 255, cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY, 11, 2);
+                // 4?? Filtro finale: binarizzazione per garantire bianco e nero puro
+                cv.threshold(dst, binary, 128, 255, cv.THRESH_BINARY);
+
+
+                // Mostriamo l'immagine processata
+                cv.imshow(canvas, dst);
+                const processedImageContainer = document.getElementById('processedImageContainer');
+                processedImageContainer.innerHTML = '';
+                processedImageContainer.appendChild(canvas);
+
+                // Pulizia della memoria
+                src.delete(); gray.delete(); dst.delete(); filtered.delete();
+
+                return canvas;
+            }
+            */
+            /*
+            let thresholdValue = 40;
+            document.addEventListener("DOMContentLoaded", function () {
+
+                let slider = document.getElementById("thresholdSlider");
+                let outputCanvas = document.getElementById("outputCanvas");
+                let ctx = outputCanvas.getContext("2d");
+
+                slider.addEventListener("input", function () {
+                    thresholdValue = parseInt(this.value);
+                    document.getElementById("thresholdValue").innerText = thresholdValue;
+                    //processImage(thresholdValue);
+                });
+            });
+            */
+            function resizeToMax(img, maxWidth, maxHeight) {
+                let src = cv.imread(img);  // Carica l'immagine in OpenCV
+                let dst = new cv.Mat();
+
+                let scaleX = maxWidth / src.cols;
+                let scaleY = maxHeight / src.rows;
+                let scaleFactor = Math.max(scaleX, scaleY); // Usa MAX per ingrandire invece di ridurre
+
+                let newWidth = Math.round(src.cols * scaleFactor);
+                let newHeight = Math.round(src.rows * scaleFactor);
+                let dsize = new cv.Size(newWidth, newHeight);
+
+                // Usa INTER_CUBIC per un'ottima qualità di ingrandimento
+                cv.resize(src, dst, dsize, 0, 0, cv.INTER_CUBIC);
+
+                let newCanvas = document.createElement('canvas');
+                cv.imshow(newCanvas, dst);  // Mostra l'immagine ridimensionata
+
+                src.delete();
+                dst.delete();
+
+                return newCanvas; // Ritorna il canvas con l'immagine ingrandita
+            }
+
+            function preprocessImage(img) {
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+
+                let width = img.width;
+                let height = img.height;
+                // Controlla se è più grande di 600x600
+
+                const maxSize = 2200;
+                if (width > maxSize || height > maxSize) {
+                    const scale = Math.min(maxSize / width, maxSize / height);
+                    width = Math.round(width * scale);
+                    height = Math.round(height * scale);
+                }
+                const minXsize = 1600;
+                const minYsize = 1600;
+                let dstimg = new cv.Mat();
+                let resizedCanvas = null;
+                if (width < maxSize || height < maxSize) {
+                    resizedCanvas = resizeToMax(img, minXsize, minYsize);
+                    width = resizedCanvas.width;
+                    height = resizedCanvas.height;
+                }
+                else
+                    resizedCanvas = img;
+                // Imposta il canvas con le nuove dimensioni
+                canvas.width = width;
+                canvas.height = height;
+                ctx.drawImage(resizedCanvas, 0, 0, width, height);
+
+                // Attendi che OpenCV sia pronto
+
+                let src2 = cv.imread(canvas);
+                let dst = new cv.Mat();
+
+                // Usa INTER_AREA per ridimensionare senza perdere qualità
+                let dsize = new cv.Size(width, height);
+                cv.resize(src2, dst, dsize, 0, 0, cv.INTER_AREA);
+                let src = dst;//cv.imread(canvas);
+                //let fnl = deskewImage2(src);
+                /*
+                let gray = new cv.Mat();
+                let binary = new cv.Mat();
+                let morph = new cv.Mat();
+                let mask = new cv.Mat();
+                let filtered = new cv.Mat();
+                let bw = new cv.Mat();
+                */
+                // 1?? Converti in scala di grigi
+                //cv.threshold(src, gray, 128, 255, cv.THRESH_BINARY);
+
+                /*
+                 # Convert the image to gray scale
+            gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+
+            # Performing OTSU threshold
+            ret, thresh1 = cv2.threshold(gray, 0, 255, cv2.THRESH_OTSU | cv2.THRESH_BINARY_INV)
+
+            # Specify structure shape and kernel size.
+            # Kernel size increases or decreases the area
+            # of the rectangle to be detected.
+            # A smaller value like (10, 10) will detect
+            # each word instead of a sentence.
+            rect_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (18, 18))
+
+            # Applying dilation on the threshold image
+            dilation = cv2.dilate(thresh1, rect_kernel, iterations = 1)
+
+            # Finding contours
+            contours, hierarchy = cv2.findContours(dilation, cv2.RETR_EXTERNAL,
+                                                             cv2.CHAIN_APPROX_NONE)
+                 */
+                // 2?? Equalizzazione istogramma per migliorare il contrasto
+                //cv.equalizeHist(gray, binary);
+                //cv.bilateralFilter(binary, gray, 9, 75, 75, cv.BORDER_DEFAULT);
+                /*
+                cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY, 0);
+                cv.threshold(gray, binary, 0, 255, cv.THRESH_BINARY | cv.THRESH_OTSU | cv.THRESH_BINARY_INV);
+                //cv.threshold(gray, bw, 128, 255, cv.THRESH_BINARY);
+                //cv.adaptiveThreshold(bw, binary, 255, cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY, 11, 2);
+                // 3?? Filtro bilaterale per ridurre il rumore mantenendo i bordi nitidi
+              //  let filtered = new cv.Mat();
+               //cv.bilateralFilter(gray, binary, 9, 75, 75, cv.BORDER_DEFAULT);
+                //cv.threshold(bw, mask, thresholdValue, 255, cv.THRESH_BINARY); // 50 = cutoff per il nero
+
+                // Applica la maschera all'immagine originale
+                //cv.bitwise_and(bw, bw, filtered, mask);
+                //cv.bilateralFilter(gray, filtered, 9, 75, 75, cv.BORDER_DEFAULT);
+
+                // 4?? Soglia adattiva per binarizzare meglio il testo
+                //cv.adaptiveThreshold(filtered, binary, 255, cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY, 11, 2);
+
+                //cv.threshold(mask, last, 0, 255, cv.THRESH_BINARY | cv.THRESH_OTSU);
+                // 4?? Soglia adattiva per binarizzare meglio il testo
+               //cv.adaptiveThreshold(filtered, binary, 255, cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY, 11, 2);
+                //cv.threshold(binary, binary, 0, 255, cv.THRESH_BINARY | cv.THRESH_OTSU);
+
+                // 5?? Rimozione rumore con operazioni morfologiche
+                let kernel = cv.getStructuringElement(cv.MORPH_RECT, new cv.Size(1, 1));
+                cv.morphologyEx(binary, morph, cv.MORPH_CLOSE, kernel);
+
+                // Converti in scala di grigi
+                cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY, 0);
+
+                // Applica il filtro Canny per trovare i bordi
+                cv.Canny(gray, binary, 50, 150);
+
+                // Usa la maschera dei bordi per estrarre solo i pixel corrispondenti dall'originale
+                cv.bitwise_and(src, src, filtered, binary);
+
+                // Applica la soglia Otsu per rendere il testo più netto
+                cv.threshold(gray, filtered, 0, 255, cv.THRESH_BINARY + cv.THRESH_OTSU + cv.THRESH_BINARY_INV);
+
+                // Dilatazione per riempire i bordi sottili delle lettere
+                cv.morphologyEx(filtered, filtered, cv.MORPH_CLOSE, kernel);
+
+                // Applica il filtro Canny per trovare i bordi
+                cv.Canny(filtered, binary, 50, 150);
+
+                // Usa la maschera dei bordi per estrarre solo i pixel corrispondenti dall'originale
+                cv.bitwise_and(src, src, filtered, binary);
+                */
+                // Mostriamo l'immagine processata
+                cv.imshow(canvas, src);
+                /*
+                const processedImageContainer = document.getElementById('processedImageContainer');
+                processedImageContainer.innerHTML = '';
+                processedImageContainer.appendChild(canvas);
+                */
+                // ?? Pulizia memoria temporanea
+                //gray.delete();
+                //mask.delete();
+                //kernel.delete();
+                dst.delete();
+
+                src2.delete();
+                return canvas;
+            }
+
+
+            function processImage(event) {
+
+                const category = event.target.dataset.category;
+                const file = event.target.files[0];
+                if (!file) return;
+
+                const reader = new FileReader();
+                reader.onload = function () {
+                    if (scanType === 'qr') {
+                        const img = new Image();
+                        img.src = reader.result;
+                        img.onload = function () {
+                            const codeReader = new ZXing.BrowserMultiFormatReader();
+                            codeReader.decodeFromImageElement(img).then(result => {
+                                saveData(category, result.text);
+                            }).catch(err => {
+                                console.error("Errore QR:", err);
+                            });
+                        };
+                    }
+                    else {
+                        /*
+                        Tesseract.recognize(reader.result, 'ita',{
+                            tessedit_char_whitelist: '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz:/.€,-'
+                        }).then(({ data: { text } }) => {
+
+                            if (category == 'pagamenti')
+                                extractPaymentData(category, text);
+                            else
+                                saveData(category, text);
+                        });
+                        */
+
+
+                        const img = new Image();
+                        img.src = reader.result;
+                        img.onload = async function () {
+                            const processedImage = preprocessImage(img);
+                            const { data: { text } } = await Tesseract.recognize(processedImage, 'ita', {
+                                tessedit_char_whitelist: '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz:/.€,-', // Limita i caratteri riconoscibili
+                                logger: m => console.log(m)
+                            });
+
+                            //console.log("Testo OCR:\n", text);
+                            //document.getElementById('output').innerText = text;
+
+                            if (category == 'pagamenti')
+                                extractPaymentData(category, text);
+                            else if (category == 'multe') {
+                                extractMultaData(category, text);
+                            }
+                            else
+                                saveData(category, text);
+                        };
+
+                    }
+                };
+                reader.readAsDataURL(file);
+            }
+
+            function openOCR(category) {
+                let fileInput = document.getElementById("file-input");
+                fileInput.dataset.category = category;
+                scanType = 'ocr';
+                fileInput.click();
+            }
+            function extractMultaData(category, text) {
+                const datePattern = /\b(\d{1,2}[\/.-]\d{1,2}[\/.-]\d{2,4})\b/;
+                const totalRegex = /(?:NUM|Data|Ora|In|infrazione|Sanzione|TOTALE)[^\d]*([\d.,-]+)/i;
+                let foundTotal = null;
+                let foundDate = null;
+                let num = null;
+                let data = null;
+                let ora = null;
+                let via = null;
+                let infrazione = null;
+                let sanzione_tot = null;
+                let totale = null;
+                // Scorriamo ogni riga per cercare le informazioni
+                const lines = text.split("\n");
+                lines.forEach(line => {
+                    const totalMatch = line.match(totalRegex);
+                    const dateMatch = line.match(datePattern);
+                    const justDataMatch = line.match(datePattern);
+                    if (totalMatch) {
+                        let splitted = totalMatch.input.split("; ")[1];
+
+                        if (!splitted)
+                            splitted = totalMatch.input.split(": ")[1];
+
+                        let wht = totalMatch[0].split(": ")[0];
+                        wht = wht.toLowerCase();
+                        if (wht.includes(";")) {
+                            wht = wht.split(";")[0];
+
+                        }
+                        wht = wht.trimEnd();
+                        if (wht == "num") {
+
+                            num = splitted; // Convertiamo , in . per numeri
+                        }
+                        if (wht == "data") {
+                            if (dateMatch && !foundDate) {
+                                data = dateMatch[1] + (dateMatch[2] ? " " + dateMatch[2] : "");
+                            }
+                        }
+                        if (wht == "ora") {
+
+                            ora = splitted.replace(".", ":"); // Convertiamo , in . per numeri
+                            ora = ora.replace(",", ":"); // Convertiamo , in . per numeri
+                        }
+                        if (wht == "in") {
+                            via = splitted; // Convertiamo , in . per numeri
+                        }
+                        if (wht == "infrazione") {
+                            infrazione = splitted;  // Convertiamo , in . per numeri
+                        }
+                        if (wht == "sanzione") {
+                            sanzione_tot = splitted;  // Convertiamo , in . per numeri
+                        }
+                        if (wht == "totale") {
+                            totale = splitted;  // Convertiamo , in . per numeri
+                        }
+                        /*
+                        if (dateMatch && !foundDate) {
+                            foundDate = dateMatch[1] + (dateMatch[2] ? " " + dateMatch[2] : "");
+                        }
+
+                        if (justDataMatch && !foundDate) {
+                            foundDate = justDataMatch[0];
+                        }
+                        */
+                    }
+                });
+                saveMulte(num, data, ora, via, infrazione, sanzione_tot, totale);
+            }
+            function extractPaymentData(category, text) {
+
+                const datePattern = /\b(\d{1,2}[\/.-]\d{1,2}[\/.-]\d{2,4})\b/i;
+                /*const pricePattern = /(\d+[\.,]?\d*) ?€?/;
+
+               const dateMatch = text.match(datePattern);
+               const priceMatch = text.match(pricePattern);
+
+               const date = dateMatch ? dateMatch[0] : "Data non trovata";
+               const total = priceMatch ? priceMatch[1].replace(",", ".") : "Importo non trovato";
+               const tout = "totale: " + total + " | Data: " + date;
+               //saveData(category, tout);
+               */
+                // Dividiamo il testo riga per riga
+                const lines = text.split("\n");
+
+                // Regex per trovare il totale (es: "TOTALE 25.50" o "Total: 30,99")
+                //const totalRegex = /(?:IMPORTO|IMPORTO PAGATO|TOTALE)[^\d]*([\d.,]+)/i;
+                //const totalRegex = /(?:IMPORTO|IMPORTO PAGATO|TOTALE)[^\d]*([\d.,]+)\s*(?:EUR)?/i;
+                //const totalRegex = /(?:IMPORTO|IMPORTO PAGATO|TOTALE)?\s*([\d.,]+)\s*(?:EUR)?/i;
+                //const totalRegex = /(?:ZEUS|EUR|IMPORTO|IMPORTO PAGATO|TOTALE)?\s*(?:EUR)?/i;
+                const totalRegex = /(?:IMPORTO|IMPORTO PAGATO|PAGATO|TOTALE|PAGAMENTO CONTANTE|PAGAMENTO ELETTRONICO)[^\d]*([\d]{1,3}(?:[.,]\d{2})?)|([\d]{1,3}(?:[.,]\d{2})?)\s*EUR/i;
+                const totalRegexPC = /(?:PAGAMENTO CONTANTE)[^\d]*([\d]{1,3}(?:[.,]\d{2})?)|([\d]{1,3}(?:[.,]\d{2})?)\s*EUR/i;
+                const totalRegexPE = /(?:PAGAMENTO ELETTRONICO)[^\d]*([\d]{1,3}(?:[.,]\d{2})?)|([\d]{1,3}(?:[.,]\d{2})?)\s*EUR/i;
+
+                // Regex per trovare date nel formato: 27/01/1975 19:30 o 27-01-1975 19:30
+                const dateRegex = /(\d{2}[\/-]\d{2}[\/-]\d{4})\s*(\d{2}:\d{2})?/i;
+                const dateRegex2 = /(\d{2}-\d{2}-\d{4})\s*(?:ora\s*)?(\d{2}:\d{2})?/i;
+                let foundTotal = null;
+                let foundDate = null;
+                let descrizione = "";
+                let contanti = "0€";
+                let carte = "0€";
+                let insert = true;
+                // Scorriamo ogni riga per cercare le informazioni
+                lines.forEach(line => {
+
+                    const totalMatch = line.match(totalRegex);
+                    const contantip = line.match(totalRegexPC);
+                    const cartep = line.match(totalRegexPE);
+                    /*const dateMatch = line.match(dateRegex);
+                    const justDataMatch = line.match(datePattern);
+                    if (totalMatch) {
+                        for (var j = 1; j < totalMatch.length; j++)
+                        {
+                            if (totalMatch[j] != null)
+                                foundTotal = totalMatch[j].replace(",", "."); // Convertiamo , in . per numeri
+                        }
+                    }
+
+                    if (dateMatch && !foundDate) {
+                        foundDate = dateMatch[1] + (dateMatch[2] ? " " + dateMatch[2] : "");
+                    }
+
+                    if (justDataMatch && !foundDate) {
+                        foundDate = justDataMatch[0];
+                    }
+                    if (via == null && tel == null && foundDate == null && foundTotal == null) {
+                        descrizione += line;
+                        descrizione.replace("\n", ",");
+                    }
+                    */
+                    const dateMatch = line.match(dateRegex);
+                    const dateMatch2 = line.match(dateRegex2);
+                    const justDataMatch = line.match(datePattern);
+                    if (dateMatch && !foundDate) {
+                        foundDate = dateMatch[1] + (dateMatch[2] ? " " + dateMatch[2] : "");
+                    }
+                    if (dateMatch2 && !foundDate) {
+                        foundDate = dateMatch2[1] + (dateMatch2[2] ? " " + dateMatch[2] : "");
+                    }
+                    if (justDataMatch && !foundDate) {
+                        foundDate = justDataMatch[0];
+                    }
+                    if (contantip || line.toLowerCase().includes("pagamento contante")) {
+                        if (contantip)
+                            contanti = contantip[1] + "€";
+                        else
+                            contanti = foundTotal + "€";
+                    }
+                    if (cartep || line.toLowerCase().includes("pagamento elettronico")) {
+                        if (cartep)
+                            carte = cartep[1] + "€";
+                        else
+                            carte = foundTotal + "€";
+                    }
+                    if (totalMatch) {
+                        let splitted = totalMatch[1];
+
+                        if (!splitted)
+                            splitted = totalMatch.input.split(": ")[1];
+                        if (!splitted)
+                            splitted = totalMatch.input.split(" ")[1];
+
+                        let wht = totalMatch.input.split(" ")[0];
+                        wht = wht.toLowerCase();
+                        if (wht.includes(";")) {
+                            wht = wht.split(";")[0];
+
+                        }
+                        wht = wht.trimEnd();
+
+                        if (wht.includes("importo") || wht.includes("importo pagato") ||
+                            wht.includes("totale") || totalMatch.input.toLowerCase().includes("eur") ||
+                            totalMatch.input.toLowerCase().includes("pagato")) {
+                            foundTotal = splitted.replace(",", ".");
+
+                        }
+                        /*
+                        if (wht == "via") {
+                            via = totalMatch.input;
+                        }
+                        if (wht.includes("tel") || wht.includes("el:")) {
+                            splitted = null;
+                            let stri = totalMatch.input.toLowerCase();
+                            splitted = stri.split(wht)[1];
+                            if (!splitted)
+                                splitted = totalMatch.input.split(":")[1];
+                            tel = splitted;
+                        }
+                        */
+                    }
+                    else {
+                        if (insert) {
+                            if (line) {
+                                let str = line.toLowerCase();
+                                if (str.includes("documento commerciale"))
+                                    insert = false;
+                                else
+                                    descrizione += line + "|";
+
+                            }
+                        }
+                    }
+                });
+
+                savePayment(descrizione, foundDate, contanti, carte, foundTotal);
+
+            }
+            const DB_NAME = "HUB_LIFE_DB";
+            const STORE_NAMES = ["calendario", "multe", "pagamenti", "salute"];
+            let db;
+
+            function initDB() {
+                const request = indexedDB.open(DB_NAME, 1);
+                request.onupgradeneeded = event => {
+                    db = event.target.result;
+                    STORE_NAMES.forEach(store => {
+                        if (!db.objectStoreNames.contains(store)) {
+                            db.createObjectStore(store, { keyPath: "id", autoIncrement: true });
+                        }
+                    });
+                };
+                request.onsuccess = event => {
+                    db = event.target.result;
+                };
+                request.onerror = event => {
+                    console.error("Errore apertura DB:", event.target.errorCode);
+                };
+            }
+            function clearDatabase() {
+                const request = indexedDB.deleteDatabase(DB_NAME);
+                request.onsuccess = () => {
+                    console.log("Database eliminato con successo!");
+                    location.reload(); // Ricarica la pagina per ricreare il database
+                };
+                request.onerror = event => {
+                    console.error("Errore eliminazione DB:", event.target.error);
+                };
+            }
+
+            function clearAllStores() {
+                const transaction = db.transaction(STORE_NAMES, "readwrite");
+                STORE_NAMES.forEach(storeName => {
+                    const store = transaction.objectStore(storeName);
+                    store.clear().onsuccess = () => {
+                        console.log(`Store "${storeName}" svuotato con successo!`);
+                    };
+                });
+            }
+            function saveData(category, text) {
+                if (!STORE_NAMES.includes(category)) {
+                    console.error("Categoria non valida:", category);
+                    return;
+                }
+
+                const transaction = db.transaction(category, "readwrite");
+                const store = transaction.objectStore(category);
+                store.add({ text, date: new Date() });
+                loadCategoryData(category);
+            }
+            function loadCategoryDataIn(category) {
+                switch (category) {
+                    case "pagamenti":
+                        loadPayments();
+                        break;
+                    case "multe":
+                        loadMulte();
+                        break;
+                }
+            }
+            function loadCategoryData(category) {
+                if (!STORE_NAMES.includes(category)) {
+                    console.error("Categoria non valida:", category);
+                    return;
+                }
+
+                const transaction = db.transaction(category, "readonly");
+                const store = transaction.objectStore(category);
+                const request = store.getAll();
+
+                request.onsuccess = () => {
+                    const list = document.getElementById(`${category}-list`);
+                    list.innerHTML = "";
+                    request.result.forEach(item => {
+                        const li = document.createElement("li");
+                        li.textContent = `${item.text} (${new Date(item.date).toLocaleString()})`;
+                        list.appendChild(li);
+                    });
+                };
+            }
+
+            function savePayment(descrizine, date, contanti, carta, total) {
+                const transaction = db.transaction("pagamenti", "readwrite");
+                const store = transaction.objectStore("pagamenti");
+                store.add({ descrizine, date, contanti, carta, total });
+                transaction.oncomplete = loadPayments;
+            }
+            function saveMulte(num, date, ora, via, codice, sanzione, total) {
+                const transaction = db.transaction("multe", "readwrite");
+                const store = transaction.objectStore("multe");
+                store.add({ num, date, ora, via, codice, sanzione, total });
+                transaction.oncomplete = loadMulte;
+            }
+            function loadMulte() {
+                const table = document.getElementById("multeTable");
+                table.innerHTML = "";
+                const transaction = db.transaction("multe", "readwrite");
+                const store = transaction.objectStore("multe");
+                store.openCursor().onsuccess = (event) => {
+                    const cursor = event.target.result;
+                    if (cursor) {
+                        const row = `<tr><td>${cursor.value.num}</td><td>${cursor.value.date}</td><td>${cursor.value.ora}</td><td>${cursor.value.via}</td><td>${cursor.value.codice}</td><td>${cursor.value.sanzione} €</td><td>${cursor.value.total} €</td></tr>`;
+                        table.innerHTML += row;
+                        cursor.continue();
+                    }
+                    else {
+                        sortTable(table, 0);
+                        updateLabelTrsTable(table);
+                    }
+                };
+            }
+            function loadPayments() {
+                const table = document.getElementById("paymentTable");
+                table.innerHTML = "";
+                const transaction = db.transaction("pagamenti", "readwrite");
+                const store = transaction.objectStore("pagamenti");
+                var textf = 0.0;
+                store.openCursor().onsuccess = (event) => {
+                    const cursor = event.target.result;
+                    if (cursor) {
+                        const row = `<tr><td>${cursor.value.descrizine}</td><td>${cursor.value.date}</td><td>${cursor.value.contanti}</td><td>${cursor.value.carta}</td><td>${cursor.value.total} €</td></tr>`;
+                        table.innerHTML += row;
+                        textf += parseFloat(cursor.value.total);
+                        cursor.continue();
+                    }
+                    else {
+                        sortTable(table, 0);
+                        updateLabelTrsTable(table);
+                        let pagamento_Totale = document.getElementById("pagamentoTotale");
+                        pagamento_Totale.innerText = "TOTALE: " + textf.toFixed(2) + "€";
+                    }
+                };
+
+
+            }
+
+            function loadAllData() {
+                ["calendario", "multe", "pagamenti", "salute"].forEach(loadCategoryData);
+            }
+        </script>
+</body>
+</html>
