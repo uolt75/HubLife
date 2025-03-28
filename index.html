@@ -1534,10 +1534,10 @@
 
                 let transaction = db.transaction(["calendario"], "readwrite");
                 let store = transaction.objectStore("calendario");
-                 date = convertDateFormat(date);
+                 let newdate = convertDateFormat(date);
                 let eventObj = {
                     title: title,
-                    date: date,
+                    date: newdate,
                     time: time,
                     description: description
                 };
