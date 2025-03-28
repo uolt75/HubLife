@@ -307,6 +307,12 @@
          border-right: 15px solid transparent;
         */
         }
+        .led-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+        }
         .led {
             display: inline-block;
             width: 12px;
@@ -1374,7 +1380,7 @@
                     if (cursor) {
                         let statoPagamento = cursor.value.pagata ? "yes" : "no"; // Usa emoji LED
                         // Oppure un'icona personalizzata con HTML
-                        let ledHTML = `<span class="led ${cursor.value.pagata ? 'green' : 'red'}"></span>`;
+                        let ledHTML = `<div class="led-container"><span class="led ${cursor.value.pagata ? 'green' : 'red'}"></span></div>`;
                         const row = `<tr><td>${cursor.value.num}</td><td>${cursor.value.date}</td><td>${cursor.value.ora}</td><td>${cursor.value.via}</td><td>${cursor.value.codice}</td><td>${cursor.value.sanzione} €</td><td>${cursor.value.total} €</td><td>${ledHTML}</td></tr>`;
                         table.innerHTML += row;
                         cursor.continue();
