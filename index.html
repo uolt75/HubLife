@@ -455,11 +455,7 @@
                 let div_butt = document.getElementById("Button_Up");
                 div_butt.style.maxWidth = maxW  + "px";
                 const buttons = document.querySelectorAll(".button-container");
-                
-                if (buttons.length > 0) {
-                    buttons[0].classList.add("active"); // Seleziona il primo pulsante della lista
-                }
-
+            
                 for (var i = 0; i < buttons.length; i++) {
                     buttons[i].addEventListener("mouseenter", function () {
 
