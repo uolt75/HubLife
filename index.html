@@ -1510,6 +1510,16 @@
                 document.getElementById("event-description").value = "";
 
             }
+            function convertDateFormat(dateStr) {
+                let parts = dateStr.split("-");
+                if (parts.length !== 3) {
+                    console.error("Formato data non valido");
+                    return null;
+                }
+
+                let newDate = `${parts[2]}/${parts[1]}/${parts[0]}`;
+                return newDate;
+            }
             function saveEvent(title, date, time, description) {
                 /*
                 let title = document.getElementById("event-title").value;
@@ -1524,7 +1534,7 @@
 
                 let transaction = db.transaction(["calendario"], "readwrite");
                 let store = transaction.objectStore("calendario");
-
+                 date = convertDateFormat(date);
                 let eventObj = {
                     title: title,
                     date: date,
