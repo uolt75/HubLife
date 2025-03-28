@@ -105,7 +105,7 @@
             transition: width 2.5s ease-in-out, height 2.5s ease-in-out, opacity 2.5s ease-in-out;
         }
 
-            /* Quando la tabella Ë visibile */
+            /* Quando la tabella √® visibile */
             .animated-table.show {
                 width: 100%;
                 border-collapse: collapse;
@@ -199,7 +199,7 @@
             border-radius: 10px;
             cursor: pointer;
             transition: background 0.38s;
-            width: 100%; /* Adattabilit‡ */
+            width: 100%; /* Adattabilit√† */
             width: 70px; /* Evita pulsanti troppo larghi */
             height: 70px;
             border-radius: 20px;
@@ -368,7 +368,7 @@
                 <button class="custom-button" onclick="openFilePicker('pagamenti')">?? Scansiona QR</button>
                 <button class="custom-button" onclick="openOCR('pagamenti')">?? Leggi Testo</button>
                 <div style="text-align:right; width:100%;margin-right: 20px;">
-                    <h1 id="pagamentoTotale" style="color:greenyellow; font-size:12px;">TOTALE 0Ä</h1>
+                    <h1 id="pagamentoTotale" style="color:greenyellow; font-size:12px;">TOTALE 0‚Ç¨</h1>
                 </div>
             </div>
 
@@ -633,7 +633,7 @@
                 canvas.height = img.height;
                 ctx.drawImage(img, 0, 0, img.width, img.height);
 
-                // Convertire in bianco e nero per migliore leggibilit‡
+                // Convertire in bianco e nero per migliore leggibilit√†
                 const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
                 const pixels = imageData.data;
 
@@ -682,7 +682,7 @@
                     let theta = lines.data32F[i * 2 + 1];
                     let angle = (theta * 180) / Math.PI - 90; // Convertiamo in gradi
 
-                    // Filtriamo solo le linee quasi orizzontali (-45∞ < angolo < 45∞)
+                    // Filtriamo solo le linee quasi orizzontali (-45¬∞ < angolo < 45¬∞)
                     if (angle > -45 && angle < 45) {
                         angleSum += angle;
                         count++;
@@ -818,7 +818,7 @@
                 let newHeight = Math.round(src.rows * scaleFactor);
                 let dsize = new cv.Size(newWidth, newHeight);
 
-                // Usa INTER_CUBIC per un'ottima qualit‡ di ingrandimento
+                // Usa INTER_CUBIC per un'ottima qualit√† di ingrandimento
                 cv.resize(src, dst, dsize, 0, 0, cv.INTER_CUBIC);
 
                 let newCanvas = document.createElement('canvas');
@@ -836,7 +836,7 @@
 
                 let width = img.width;
                 let height = img.height;
-                // Controlla se Ë pi˘ grande di 600x600
+                // Controlla se √® pi√π grande di 600x600
 
                 const maxSize = 2200;
                 if (width > maxSize || height > maxSize) {
@@ -865,7 +865,7 @@
                 let src2 = cv.imread(canvas);
                 let dst = new cv.Mat();
 
-                // Usa INTER_AREA per ridimensionare senza perdere qualit‡
+                // Usa INTER_AREA per ridimensionare senza perdere qualit√†
                 let dsize = new cv.Size(width, height);
                 cv.resize(src2, dst, dsize, 0, 0, cv.INTER_AREA);
                 let src = dst;//cv.imread(canvas);
@@ -940,7 +940,7 @@
                 // Usa la maschera dei bordi per estrarre solo i pixel corrispondenti dall'originale
                 cv.bitwise_and(src, src, filtered, binary);
 
-                // Applica la soglia Otsu per rendere il testo pi˘ netto
+                // Applica la soglia Otsu per rendere il testo pi√π netto
                 cv.threshold(gray, filtered, 0, 255, cv.THRESH_BINARY + cv.THRESH_OTSU + cv.THRESH_BINARY_INV);
 
                 // Dilatazione per riempire i bordi sottili delle lettere
@@ -993,7 +993,7 @@
                     else {
                         /*
                         Tesseract.recognize(reader.result, 'ita',{
-                            tessedit_char_whitelist: '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz:/.Ä,-'
+                            tessedit_char_whitelist: '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz:/.‚Ç¨,-'
                         }).then(({ data: { text } }) => {
 
                             if (category == 'pagamenti')
@@ -1009,7 +1009,7 @@
                         img.onload = async function () {
                             const processedImage = preprocessImage(img);
                             const { data: { text } } = await Tesseract.recognize(processedImage, 'ita', {
-                                tessedit_char_whitelist: '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz:/.Ä,-', // Limita i caratteri riconoscibili
+                                tessedit_char_whitelist: '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz:/.‚Ç¨,-', // Limita i caratteri riconoscibili
                                 logger: m => console.log(m)
                             });
 
@@ -1109,7 +1109,7 @@
             function extractPaymentData(category, text) {
 
                 const datePattern = /\b(\d{1,2}[\/.-]\d{1,2}[\/.-]\d{2,4})\b/i;
-                /*const pricePattern = /(\d+[\.,]?\d*) ?Ä?/;
+                /*const pricePattern = /(\d+[\.,]?\d*) ?‚Ç¨?/;
 
                const dateMatch = text.match(datePattern);
                const priceMatch = text.match(pricePattern);
@@ -1137,8 +1137,8 @@
                 let foundTotal = null;
                 let foundDate = null;
                 let descrizione = "";
-                let contanti = "0Ä";
-                let carte = "0Ä";
+                let contanti = "0‚Ç¨";
+                let carte = "0‚Ç¨";
                 let insert = true;
                 // Scorriamo ogni riga per cercare le informazioni
                 lines.forEach(line => {
@@ -1182,15 +1182,15 @@
                     }
                     if (contantip || line.toLowerCase().includes("pagamento contante")) {
                         if (contantip)
-                            contanti = contantip[1] + "Ä";
+                            contanti = contantip[1] + "‚Ç¨";
                         else
-                            contanti = foundTotal + "Ä";
+                            contanti = foundTotal + "‚Ç¨";
                     }
                     if (cartep || line.toLowerCase().includes("pagamento elettronico")) {
                         if (cartep)
-                            carte = cartep[1] + "Ä";
+                            carte = cartep[1] + "‚Ç¨";
                         else
-                            carte = foundTotal + "Ä";
+                            carte = foundTotal + "‚Ç¨";
                     }
                     if (totalMatch) {
                         let splitted = totalMatch[1];
@@ -1348,7 +1348,7 @@
                 store.openCursor().onsuccess = (event) => {
                     const cursor = event.target.result;
                     if (cursor) {
-                        const row = `<tr><td>${cursor.value.num}</td><td>${cursor.value.date}</td><td>${cursor.value.ora}</td><td>${cursor.value.via}</td><td>${cursor.value.codice}</td><td>${cursor.value.sanzione} Ä</td><td>${cursor.value.total} Ä</td></tr>`;
+                        const row = `<tr><td>${cursor.value.num}</td><td>${cursor.value.date}</td><td>${cursor.value.ora}</td><td>${cursor.value.via}</td><td>${cursor.value.codice}</td><td>${cursor.value.sanzione} ‚Ç¨</td><td>${cursor.value.total} ‚Ç¨</td></tr>`;
                         table.innerHTML += row;
                         cursor.continue();
                     }
@@ -1367,7 +1367,7 @@
                 store.openCursor().onsuccess = (event) => {
                     const cursor = event.target.result;
                     if (cursor) {
-                        const row = `<tr><td>${cursor.value.descrizine}</td><td>${cursor.value.date}</td><td>${cursor.value.contanti}</td><td>${cursor.value.carta}</td><td>${cursor.value.total} Ä</td></tr>`;
+                        const row = `<tr><td>${cursor.value.descrizine}</td><td>${cursor.value.date}</td><td>${cursor.value.contanti}</td><td>${cursor.value.carta}</td><td>${cursor.value.total} ‚Ç¨</td></tr>`;
                         table.innerHTML += row;
                         textf += parseFloat(cursor.value.total);
                         cursor.continue();
@@ -1376,7 +1376,7 @@
                         sortTable(table, 0);
                         updateLabelTrsTable(table);
                         let pagamento_Totale = document.getElementById("pagamentoTotale");
-                        pagamento_Totale.innerText = "TOTALE: " + textf.toFixed(2) + "Ä";
+                        pagamento_Totale.innerText = "TOTALE: " + textf.toFixed(2) + "‚Ç¨";
                     }
                 };
 
