@@ -438,9 +438,10 @@
                 console.log("Larghezza: " + width + "px");
                 console.log("Altezza: " + height + "px");
                 let conteiner = document.querySelectorAll(".container");
-                conteiner.style.maxWidth = (width - 50) + "px";
+                let maxW = width - 50;
+                conteiner.style.maxWidth = maxW  + "px";
                 let section = document.querySelectorAll(".section");
-                section.style.maxWidth = (width - 50) + "px";
+                section.style.maxWidth = maxW  + "px";
                 let windowHeight = window.innerHeight;
                 let headerHeight = document.querySelector("header")?.offsetHeight || 0;
                 let footerHeight = document.querySelector("footer")?.offsetHeight || 0;
