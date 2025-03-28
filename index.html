@@ -293,26 +293,27 @@
         .tr {
         }
 
-        #paymentTable, #multeTable {
+        #paymentTable, #multeTable, #eventTable {
             height: 50px;
             margin: 5px 5px;
             color: white;
             /*border: solid 2px white;*/
             border-spacing: 5px;
             border-color: white;
-            font-size: 12px;
-            background-color: lawngreen;
+            font-size: 20px;
             /*
-         border-left: 15px solid transparent;
-         border-right: 15px solid transparent;
-        */
+    border-left: 15px solid transparent;
+    border-right: 15px solid transparent;
+   */
         }
+
         .led-container {
             display: flex;
             justify-content: center;
             align-items: center;
             height: 100%;
         }
+
         .led {
             display: inline-block;
             width: 12px;
@@ -352,18 +353,35 @@
         <button class="button-container" onclick="showSection('salute')">Salute</button>
     -->
     </div>
-    <div id="calendario" class="section">
+    <div id="calendario" class="section" style="display:none;">
         <h2>Calendario</h2>
-        <div style="display:flex; gap:10px; " >
-            <button class="custom-button" onclick="openFilePicker('calendario')">?? Scansiona QR</button>
-            <button class="custom-button" onclick="openOCR('calendario')">?? Leggi Testo</button>
-            </div>
-            <ul id="calendario-list"></ul>
-            <input type="text" id="event-title" placeholder="Nome evento">
-            <input type="date" id="event-date">
-            <button onclick="addEvent()">Salva Evento</button>
-            <ul id="event-list"></ul>
+        <div style="display:flex; gap:10px;">
+            <button class="custom-button" onclick="openFilePicker('calendario')">📷 Scansiona QR</button>
+            <button class="custom-button" onclick="openOCR('calendario')">📄 Leggi Testo</button>
         </div>
+
+        <!-- Form per inserire un evento -->
+        <input style="height:40px;width:100px; font-size:12px;" type="text" id="event-title" placeholder="Nome evento">
+        <input style="height: 40px; width: 70px; font-size: 12px;"type="date" id="event-date">
+        <input style="height: 40px; width: 70px; font-size: 12px; "type="time" id="event-time">
+        <input style="height: 40px; width: 100px; font-size: 12px;"type="text" id="event-description" placeholder="Descrizione">
+        <button onclick="addEvent()">Salva Evento</button>
+
+        <!-- Tabella per mostrare gli eventi salvati -->
+        <table class="animated-table" id="TabCal">
+            <thead id="thead_prog">
+                <tr>
+                    <th>Nome Evento</th>
+                    <th>Data</th>
+                    <th>Ora</th>
+                    <th>Descrizione</th>
+                </tr>
+            </thead>
+            <tbody id="eventTable">
+                <!-- Qui verranno inseriti gli eventi -->
+            </tbody>
+        </table>
+    </div>
 
     <div id="multe" class="section">
         <h2>Multe</h2>
@@ -608,6 +626,13 @@
                 tableM.style.width = "0px";  // Resetta la larghezza
                 tableM.style.height = "0px"; // Resetta l'altezza
                 tableM.style.opacity = "0";   // Lo rende invisibile
+                
+                let tableC = document.getElementById("TabCal");
+                tableC.classList.remove("show");
+                tableC.style.transition = "none";
+                tableC.style.width = "0px";  // Resetta la larghezza
+                tableC.style.height = "0px"; // Resetta l'altezza
+                tableC.style.opacity = "0";   // Lo rende invisibile
                 let tbody_prog = null;
                 switch (sectionId) {
                     case "pagamenti":
@@ -633,6 +658,18 @@
                                 tableM.style.opacity = "1";
                                 tableM.style.width = "100%";
                                 tableM.style.height = "100%";
+                            }, 200);
+                        }, 200);
+                        break;
+                    case "calendario":
+                        tbody_prog = document.getElementById("eventTable");
+                        setTimeout(function () {
+                            tableC.style.transition = "width 2.5s ease-in-out, height 2.5s ease-in-out, opacity 2.5s ease-in-out;";
+                            tableC.classList.add("show");
+                            setTimeout(function () {
+                                tableC.style.opacity = "1";
+                                tableC.style.width = "100%";
+                                tableC.style.height = "100%";
                             }, 200);
                         }, 200);
                         break;
@@ -1061,6 +1098,20 @@
                 scanType = 'ocr';
                 fileInput.click();
             }
+
+            function aggiungiGiorni(dataString, giorni) {
+                let parts = dataString.split('/'); // Divide la data "gg/mm/aaaa"
+                let data = new Date(parts[2], parts[1] - 1, parts[0]); // Crea l'oggetto Date
+
+                data.setDate(data.getDate() + giorni); // Aggiunge i giorni
+
+                let nuovoGiorno = data.getDate().toString().padStart(2, '0');
+                let nuovoMese = (data.getMonth() + 1).toString().padStart(2, '0');
+                let nuovoAnno = data.getFullYear();
+
+                return `${nuovoGiorno}/${nuovoMese}/${nuovoAnno}`;
+            }
+
             function extractMultaData(category, text) {
                 const datePattern = /\b(\d{1,2}[\/.-]\d{1,2}[\/.-]\d{2,4})\b/;
                 const totalRegex = /(?:NUM|Data|Ora|In|infrazione|Sanzione|TOTALE)[^\d]*([\d.,-]+)/i;
@@ -1335,6 +1386,9 @@
                     case "multe":
                         loadMulte();
                         break;
+                    case "calendario":
+                        loadEvents();
+                        break;
                 }
             }
             function loadCategoryData(category) {
@@ -1358,13 +1412,13 @@
                 };
             }
 
-            function savePayment(descrizine, date, contanti, carta, total,pagata) {
+            function savePayment(descrizine, date, contanti, carta, total) {
                 const transaction = db.transaction("pagamenti", "readwrite");
                 const store = transaction.objectStore("pagamenti");
                 store.add({ descrizine, date, contanti, carta, total });
                 transaction.oncomplete = loadPayments;
             }
-            function saveMulte(num, date, ora, via, codice, sanzione, total,pagata) {
+            function saveMulte(num, date, ora, via, codice, sanzione, total, pagata) {
                 const transaction = db.transaction("multe", "readwrite");
                 const store = transaction.objectStore("multe");
                 store.add({ num, date, ora, via, codice, sanzione, total, pagata });
@@ -1415,10 +1469,159 @@
 
 
             }
+            function addEvent() {
 
+                let title = document.getElementById("event-title").value;
+                let date = document.getElementById("event-date").value;
+                let time = document.getElementById("event-time").value;
+                let description = document.getElementById("event-description").value;
+
+                if (!title || !date || !time || !description) {
+                    alert("Compila tutti i campi per salvare l'evento!");
+                    return;
+                }
+
+                let transaction = db.transaction(["calendario"], "readwrite");
+                let store = transaction.objectStore("calendario");
+
+                let eventObj = {
+                    title: title,
+                    date: date,
+                    time: time,
+                    description: description
+                };
+
+                let request = store.add(eventObj);
+
+                request.onsuccess = function () {
+                    console.log("Evento salvato con successo!");
+                    loadEvents(); // Ricarica gli eventi in tabella
+                };
+
+                request.onerror = function (event) {
+                    console.error("Errore nel salvataggio", event.target.error);
+                };
+
+                // Pulisce i campi dopo il salvataggio
+
+                document.getElementById("event-title").value = "";
+                document.getElementById("event-date").value = "";
+                document.getElementById("event-time").value = "";
+                document.getElementById("event-description").value = "";
+
+            }
+            function saveEvent(title, date, time, description) {
+                /*
+                let title = document.getElementById("event-title").value;
+                let date = document.getElementById("event-date").value;
+                let time = document.getElementById("event-time").value;
+                let description = document.getElementById("event-description").value;
+                */
+                if (!title || !date || !time || !description) {
+                    alert("Compila tutti i campi per salvare l'evento!");
+                    return;
+                }
+
+                let transaction = db.transaction(["calendario"], "readwrite");
+                let store = transaction.objectStore("calendario");
+
+                let eventObj = {
+                    title: title,
+                    date: date,
+                    time: time,
+                    description: description
+                };
+
+                let request = store.add(eventObj);
+
+                request.onsuccess = function () {
+                    console.log("Evento salvato con successo!");
+                    loadEvents(); // Ricarica gli eventi in tabella
+                };
+
+                request.onerror = function (event) {
+                    console.error("Errore nel salvataggio", event.target.error);
+                };
+
+                // Pulisce i campi dopo il salvataggio
+                /*
+                document.getElementById("event-title").value = "";
+                document.getElementById("event-date").value = "";
+                document.getElementById("event-time").value = "";
+                document.getElementById("event-description").value = "";
+                */
+            }
+            function loadEvents() {
+                let transaction = db.transaction(["eventi"], "readonly");
+                let store = transaction.objectStore("eventi");
+                let request = store.getAll();
+
+                request.onsuccess = function () {
+                    let events = request.result;
+                    let tableBody = document.getElementById("eventTable");
+                    tableBody.innerHTML = ""; // Pulisce la tabella
+
+                    events.forEach(event => {
+                        let row = `<tr>
+                <td>${event.title}</td>
+                <td>${event.date}</td>
+                <td>${event.time}</td>
+                <td>${event.description}</td>
+                <td><button onclick="deleteEvent(${event.id})">❌</button></td>
+            </tr>`;
+                        tableBody.innerHTML += row;
+                    });
+                };
+
+                request.onerror = function (event) {
+                    console.error("Errore nel caricamento degli eventi", event.target.error);
+                };
+            }
+            function loadEvents() {
+                let transaction = db.transaction(["calendario"], "readonly");
+                let store = transaction.objectStore("calendario");
+                let request = store.getAll();
+
+                request.onsuccess = function () {
+                    let events = request.result;
+                    let tableBody = document.getElementById("eventTable");
+                    tableBody.innerHTML = ""; // Pulisce la tabella
+
+                    events.forEach(event => {
+                        let row = `<tr>
+                <td>${event.title}</td>
+                <td>${event.date}</td>
+                <td>${event.time}</td>
+                <td>${event.description}</td>
+                <td><button onclick="deleteEvent(${event.id})">❌</button></td>
+            </tr>`;
+                        tableBody.innerHTML += row;
+                    });
+                };
+
+                request.onerror = function (event) {
+                    console.error("Errore nel caricamento degli eventi", event.target.error);
+                };
+            }
+            function deleteEvent(eventId) {
+                let transaction = db.transaction(["calendario"], "readwrite");
+                let store = transaction.objectStore("calendario");
+
+                let request = store.delete(eventId);
+
+                request.onsuccess = function () {
+                    console.log("Evento eliminato!");
+                    loadEvents(); // Aggiorna la tabella
+                };
+
+                request.onerror = function (event) {
+                    console.error("Errore nell'eliminazione", event.target.error);
+                };
+            }
             function loadAllData() {
                 ["calendario", "multe", "pagamenti", "salute"].forEach(loadCategoryData);
             }
+
         </script>
 </body>
 </html>
