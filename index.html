@@ -307,6 +307,23 @@
          border-right: 15px solid transparent;
         */
         }
+        .led {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin: auto;
+        }
+
+            .led.green {
+                background-color: green;
+                box-shadow: 0 0 5px green;
+            }
+
+            .led.red {
+                background-color: red;
+                box-shadow: 0 0 5px red;
+            }
     </style>
 </head>
 <body>
@@ -352,7 +369,7 @@
         <div class="container">
             <table class="animated-table" id="TabMulte">
                 <thead id="thead_prog">
-                    <tr><th>Numero Verbale</th><th>Data</th><th>Ora</th><th>Via</th><th>Codice infrazione</th><th>Sanzione</th><th>Totale</th></tr>
+                    <tr><th>Numero Verbale</th><th>Data</th><th>Ora</th><th>Via</th><th>Codice infrazione</th><th>Sanzione</th><th>Totale</th><th>Stato pagamento</th></tr>
                 </thead>
                 <tbody id="multeTable"></tbody>
             </table>
@@ -1106,7 +1123,7 @@
                         */
                     }
                 });
-                saveMulte(num, data, ora, via, infrazione, sanzione_tot, totale);
+                saveMulte(num, data, ora, via, infrazione, sanzione_tot, totale,false);
             }
             function extractPaymentData(category, text) {
 
@@ -1335,16 +1352,16 @@
                 };
             }
 
-            function savePayment(descrizine, date, contanti, carta, total) {
+            function savePayment(descrizine, date, contanti, carta, total,pagata) {
                 const transaction = db.transaction("pagamenti", "readwrite");
                 const store = transaction.objectStore("pagamenti");
                 store.add({ descrizine, date, contanti, carta, total });
                 transaction.oncomplete = loadPayments;
             }
-            function saveMulte(num, date, ora, via, codice, sanzione, total) {
+            function saveMulte(num, date, ora, via, codice, sanzione, total,pagata) {
                 const transaction = db.transaction("multe", "readwrite");
                 const store = transaction.objectStore("multe");
-                store.add({ num, date, ora, via, codice, sanzione, total });
+                store.add({ num, date, ora, via, codice, sanzione, total, pagata });
                 transaction.oncomplete = loadMulte;
             }
             function loadMulte() {
@@ -1355,7 +1372,10 @@
                 store.openCursor().onsuccess = (event) => {
                     const cursor = event.target.result;
                     if (cursor) {
-                        const row = `<tr><td>${cursor.value.num}</td><td>${cursor.value.date}</td><td>${cursor.value.ora}</td><td>${cursor.value.via}</td><td>${cursor.value.codice}</td><td>${cursor.value.sanzione} €</td><td>${cursor.value.total} €</td></tr>`;
+                        let statoPagamento = cursor.value.pagata ? "yes" : "no"; // Usa emoji LED
+                        // Oppure un'icona personalizzata con HTML
+                        let ledHTML = `<span class="led ${cursor.value.pagata ? 'green' : 'red'}"></span>`;
+                        const row = `<tr><td>${cursor.value.num}</td><td>${cursor.value.date}</td><td>${cursor.value.ora}</td><td>${cursor.value.via}</td><td>${cursor.value.codice}</td><td>${cursor.value.sanzione} €</td><td>${cursor.value.total} €</td><td>${ledHTML}</td></tr>`;
                         table.innerHTML += row;
                         cursor.continue();
                     }
