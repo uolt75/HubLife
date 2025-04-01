@@ -7,9 +7,9 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <title>LIFE HUB</title>
     <link rel="manifest" href="manifest.json">
-    <script src="https://cdn.jsdelivr.net/npm/typo-js@1.2.4/typo.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/typo-js"></script>
     <script src="https://unpkg.com/@zxing/library@latest"></script>
-   <script src="https://unpkg.com/tesseract.js@6.0.0/dist/tesseract.min.js"></script>
+    <script src="https://unpkg.com/tesseract.js@6.0.0/dist/tesseract.min.js"></script>
     <script async src="https://docs.opencv.org/4.5.1/opencv.js" onload="cvReady()" onerror="cvLoadError()"></script>
     <style>
         body {
@@ -131,7 +131,7 @@
                 border: none;
             }
 
-        .button-container {
+        .button-container, .button-containerl {
             display: flex;
             justify-content: center;
             align-items: center;
@@ -152,7 +152,7 @@
             transition: all 0.3s ease;
         }
 
-            .button-container::before {
+            .button-container::before, .button-containerl::before {
                 content: "";
                 position: absolute;
                 top: -4px;
@@ -166,24 +166,24 @@
                 opacity: 0;
             }
 
-            .button-container.active {
+            .button-container.active, .button-containerl.active {
                 background: linear-gradient(rgba(152, 255, 152, 0.450),rgba(107, 251, 107, 0.750));
                 box-shadow: 0px 0px 10px rgba(170, 250,170, 0.91),0px 0px 15px rgba(170, 250,170,0.80),0px 0px 30px rgba(170, 250,170, 0.650),0px 0px 60px rgba(170, 250,170, 0.450);
                 border-color: rgba(100, 255,100, 0.90);
             }
 
-                .button-container.active::before {
+                .button-container.active::before, .button-containerl.active::before {
                     opacity: 1;
                     animation: led-spin 2s linear infinite 0.3s;
                 }
 
-            .button-container:hover {
+            .button-container:hover, .button-containerl:hover {
                 transform: scale(1.051,1.051);
                 background-image: linear-gradient(rgba(167,249, 167, 0.85),rgba(0,200,0,0.55));
                 box-shadow: 0px 0px 10px rgba(170,255,170, 0.91),0px 0px 25px rgba(180,255,180, 0.80),0px 0px 40px rgba(190, 255,190, 0.70),0px 0px 70px rgba(200, 255,200, 0.20);
             }
 
-                .button-container:hover::before {
+                .button-container:hover::before, .button-containerl:hover::before {
                     box-shadow: inset 0 0 15px rgba(155, 255, 155, 0.93), /* Luce interna */
                     0 4px 6px rgba(90, 90, 90, 0.52); /* Ombra esterna */
                 }
@@ -441,8 +441,8 @@
         <div id="pagamenti" class="section">
             <h2>Pagamenti</h2>
             <div style="display:flex; gap: 10px; text-align: right;">
-                <button class="custom-button" onclick="openFilePicker('pagamenti')">?? Scansiona QR</button>
-                <button class="custom-button" onclick="openOCR('pagamenti')">?? Leggi Testo</button>
+                <button class="button-containerl" onclick="openFilePicker('pagamenti')">?? Scansiona QR</button>
+                <button class="button-containerl" onclick="openOCR('pagamenti')">?? Leggi Testo</button>
                 <div style="text-align:right; width:140px;margin-right: 1px;">
                     <h1 id="pagamentoTotale" style="color:greenyellow; font-size:16px;">TOTALE 0€</h1>
                 </div>
@@ -500,11 +500,23 @@
             
 
             async function loadDictionary() {
-                dictionary = new Typo("it", "https://cdn.jsdelivr.net/gh/titoBouzout/Dictionaries/Italiano/it_IT.dic",
-                    "https://cdn.jsdelivr.net/gh/titoBouzout/Dictionaries/Italiano/it_IT.aff");
+                try {
+                    const responseAff = await fetch("https://raw.githubusercontent.com/wooorm/dictionaries/main/dictionaries/it/index.aff");
+                    const responseDic = await fetch("https://raw.githubusercontent.com/wooorm/dictionaries/main/dictionaries/it/index.dic");
 
-                console.log("Dizionario caricato:", dictionary);
+                    const affData = await responseAff.text();
+                    const dicData = await responseDic.text();
+
+                    const dictionary = new Typo("it", affData, dicData, {});
+
+                    console.log("Dizionario caricato:", dictionary);
+
+                    return dictionary;
+                } catch (error) {
+                    console.error("Errore nel caricamento del dizionario:", error);
+                }
             }
+
             function correggiParola(parola) {
                 if (!window.dictionary) return parola; // Se il dizionario non è pronto, restituisci la parola originale
                 if (typeof Typo !== "undefined") {
@@ -757,6 +769,7 @@
 
             function openFilePicker(category) {
                 let fileInput = document.getElementById("file-input");
+                fileInput.classList.remove("active");
                 fileInput.dataset.category = category;
                 //fileInput.addEventListener("change", processImage(fileInput.event));
                 scanType = 'qr';
@@ -1109,7 +1122,7 @@
 
 
             function processImage(event) {
-
+                buttonOCR.classList.add("active");
                 const category = event.target.dataset.category;
                 const file = event.target.files[0];
                 if (!file) return;
@@ -1145,6 +1158,7 @@
                         const img = new Image();
                         img.src = reader.result;
                         img.onload = async function () {
+                           
                             const processedImage = preprocessImage(img);
                             const { data: { text } } = await Tesseract.recognize(processedImage, 'ita', {
                                 tessedit_char_whitelist: '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz:/.€,-', // Limita i caratteri riconoscibili
@@ -1161,15 +1175,19 @@
                             }
                             else
                                 saveData(category, text);
+
+                            
                         };
 
                     }
                 };
                 reader.readAsDataURL(file);
             }
-
+            let buttonOCR = null;
             function openOCR(category) {
+                buttonOCR = this;
                 let fileInput = document.getElementById("file-input");
+                fileInput.classList.add("show");
                 fileInput.dataset.category = category;
                 scanType = 'ocr';
                 fileInput.click();
@@ -1201,7 +1219,7 @@
                 let sanzione_tot = null;
                 let totale = null;
                 // Scorriamo ogni riga per cercare le informazioni
-                const lines = text.split("\n");
+                const lines = text.split("\n").filter(line => line.trim() !== "");
                 lines.forEach(line => {
                     const totalMatch = line.match(totalRegex);
                     const dateMatch = line.match(datePattern);
@@ -1272,7 +1290,17 @@
                //saveData(category, tout);
                */
                 // Dividiamo il testo riga per riga
-                const lines = text.split("\n");
+                //const lines = text.split("\n").filter(line => line.trim() !== "");
+
+                const lines = text.split("\n")
+                    .map(line => line.trim()) // Rimuove spazi bianchi iniziali e finali
+                    .filter(line => line !== "") // Rimuove righe vuote
+                    .map(line => {
+                        return line.split(" ") // Dividi la frase in parole
+                            .filter(word => dictionary.check(word)) // Mantieni solo parole valide
+                            .join(" "); // Ricostruisci la frase filtrata
+                    })
+                    .filter(line => line.length > 2); // Rimuove righe vuote dopo il filtraggio
 
                 // Regex per trovare il totale (es: "TOTALE 25.50" o "Total: 30,99")
                 //const totalRegex = /(?:IMPORTO|IMPORTO PAGATO|TOTALE)[^\d]*([\d.,]+)/i;
@@ -1384,6 +1412,7 @@
                         }
                         */
                     }
+                    /*
                     else {
                         if (insert) {
                             if (line) {
@@ -1396,11 +1425,16 @@
                             }
                         }
                     }
-
+                    */
                 });
                 if (foundDate)
                     foundDate = foundDate.replace("-", "/");
+                descrizione += lines[0].replace("|", " ") + " ";
+                descrizione += lines[1].replace("|", " ") + " ";
+                descrizione += lines[2].replace("|", " ") + " ";
+                descrizione += lines[3].replace("|", " ") + " ";
                 savePayment(descrizione, foundDate, contanti, carte, foundTotal);
+                buttonOCR.classList.remove("active");
 
             }
             function convertDateFormat(dateStr) {
